@@ -18,9 +18,13 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
       if selected_module.module_type == 'base'
         @base_type = selected_module.attributes['type']
         @ovirt_template = selected_module.attributes['ovirt_template']
+        @esxi_template = selected_module.attributes['esxi_template']
         @cpu_word_size = selected_module.attributes['cpu_word_size'].first.downcase
         if (@options.has_key? :ovirtuser) && (@options.has_key? :ovirtpass)
           @ovirt_base_template = selected_module.attributes['ovirt_template'].first
+        end
+        if (@options.has_key? :esxiuser) && (@options.has_key? :esxipass)
+          @esxi_base_template = selected_module.attributes['esxi_template'].first
         end
       end
     end -%>
@@ -58,38 +62,35 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
         ovirt.debug = true
     end
     # oVirt provider end
-<% elsif (@options.has_key? :esxiuser) && (@options.has_key? :esxipass) %>
+
+<% if (@options.has_key? :esxiuser) && (@options.has_key? :esxipass) %>
     # vmware_esxi provider begin
     <%= system.name %>.vm.provider :vmware_esxi do |esxi|
           
-<%= if @options.has_key? :ovirturl
+<%= if @options.has_key? :esxiurl
 "        esxi.esxi_hostname = '#{@options[:esxiurl]}'"
-        end %>          
+        end -%>          
 <%=
 "        esxi.esxi_username = '#{@options[:esxiuser]}'
-         esxi.esxi_password = '#{@options[:esxipass]}'" %>
+         esxi.esxi_password = '#{@options[:esxipass]}'
+         config.vm.synced_folder('.', '/vagrant', type: 'rsync')" 
 
-#modify base to include ESXI base
+-%>
+
+# modify base to include ESXI base
+<%= if (@options.has_key? :esxidatastore
+   "     esxi.esxi_disk_store = '#{@options[:esxi-datastore]}'"
+   end -%>
+   # Is the below required??
 <%=
-"        ovirt.template = '#{@ovirt_base_template}'" %>
+"        esxi.template = '#{@esxi_base_template}'" %>
 <%=     if @options.has_key? :memory_per_vm
-"        ovirt.memory_size = '#{@options[:memory_per_vm]} MB'\n"
-        elsif @options.has_key? :total_memory
-"        ovirt.memory_size = '#{(@options[:total_memory].to_i / @systems.length.to_i)} MB'\n"
-        elsif @base_type.include? 'desktop'
-"        ovirt.memory_size = '2048 MB'
-            ovirt.memory_guaranteed = '512 MB'\n"
-        else
-"        ovirt.memory_size = '512 MB'\n"
+"        esxi.guest_memsize = '#{@options[:memory_per_vm]}'"
         end -%>
 <%=     if @options.has_key? :cpu_cores
-"        ovirt.cpu_cores = #{@options[:cpu_cores]}\n"
+"        esxi.guest_numvcpus = #{@options[:cpu_cores]}\n"
         end -%>
-        ovirt.console = 'spice'
-        # ovirt.filtered_api = true
-        ovirt.insecure = true
-        ovirt.debug = true
-    end
+end
     # vmware_esxi provider end
 <%
   else %>
@@ -166,11 +167,15 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
 <%     if (selected_module.attributes['range'].first.nil? || selected_module.attributes['range'].first == "dhcp") and (!selected_module.received_inputs.include? 'IP_address' and !@options[:ip_ranges])-%>
 <%       if (@options.has_key? :ovirtnetwork) && (@options.has_key? :ovirtuser) && (@options.has_key? :ovirtpass)  %>
     <%= system.name %>.vm.network :<%= selected_module.attributes['type'].first %>, type: "dhcp", :ovirt__network_name => '<%= get_ovirt_network_name(system.name, @options[:ovirtnetwork]) %>'
+<%       elsif (@options.has_key? :esxinetwork) && (@options.has_key? :esxiuser) && (@options.has_key? :esxipass) %>
+         # esxi.esxi_virtual_network
+    <%= system.name %>.vm.network :<%= selected_module.attributes['type'].first %>, type: "dhcp", :esxi__network_name => '<%= get_esxi_network_name(system.name, @options[:esxinetwork]) %>'
 <%       else %>
     <%= system.name %>.vm.network :<%= selected_module.attributes['type'].first %>, type: "dhcp", auto_config: false
 <%       end %>
 <%     # Static networking -%>
 <%     else -%>
+        # Need to add Static esxi networking
 <%      # Static oVirt networking -%>
 <%       if (@options.has_key? :ovirtuser) && (@options.has_key? :ovirtpass) -%>
 <%         interface = 'ens3' -%>
