@@ -58,6 +58,39 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
         ovirt.debug = true
     end
     # oVirt provider end
+<% elsif (@options.has_key? :esxiuser) && (@options.has_key? :esxipass) %>
+    # vmware_esxi provider begin
+    <%= system.name %>.vm.provider :vmware_esxi do |esxi|
+          
+<%= if @options.has_key? :ovirturl
+"        esxi.esxi_hostname = '#{@options[:esxiurl]}'"
+        end %>          
+<%=
+"        esxi.esxi_username = '#{@options[:esxiuser]}'
+         esxi.esxi_password = '#{@options[:esxipass]}'" %>
+
+#modify base to include ESXI base
+<%=
+"        ovirt.template = '#{@ovirt_base_template}'" %>
+<%=     if @options.has_key? :memory_per_vm
+"        ovirt.memory_size = '#{@options[:memory_per_vm]} MB'\n"
+        elsif @options.has_key? :total_memory
+"        ovirt.memory_size = '#{(@options[:total_memory].to_i / @systems.length.to_i)} MB'\n"
+        elsif @base_type.include? 'desktop'
+"        ovirt.memory_size = '2048 MB'
+            ovirt.memory_guaranteed = '512 MB'\n"
+        else
+"        ovirt.memory_size = '512 MB'\n"
+        end -%>
+<%=     if @options.has_key? :cpu_cores
+"        ovirt.cpu_cores = #{@options[:cpu_cores]}\n"
+        end -%>
+        ovirt.console = 'spice'
+        # ovirt.filtered_api = true
+        ovirt.insecure = true
+        ovirt.debug = true
+    end
+    # vmware_esxi provider end
 <%
   else %>
     config.vm.provider :virtualbox do |vb|
