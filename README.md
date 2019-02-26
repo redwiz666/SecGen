@@ -84,6 +84,13 @@ SecGen accepts arguments to change the way that it behaves, the currently implem
       --vtxvpid: Enable VTX support
       --max-cpu-usage [1-100]: Controls how much cpu time a virtual CPU can use
                                (e.g. 50 implies a single virtual CPU can use up to 50% of a single host CPU)
+      
+      ESXI OPTIONS:
+      --esxiuser [esxi_username]
+      --esxipass [esxi_password]
+      --esxi-url [esxi_api_url]
+      --esxi-datastore [esxi_ds]
+      --esxi-network [esxi_network_name]
 
       OVIRT OPTIONS:
       --ovirtuser [ovirt_username]
