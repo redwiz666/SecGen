@@ -128,7 +128,7 @@ def build_vms(scenario, project_dir, options)
     if vagrant_output[:status] == 0
       Print.info 'VMs created.'
       successful_creation = true
-      if options[:shutdown] or OVirtFunctions::provider_ovirt?(options)
+      if options[:shutdown] or OVirtFunctions::provider_ovirt?(options) or ESXIFunctions::provider_vmware_esxi?(options)
         Print.info 'Shutting down VMs.'
         sleep(30)
         GemExec.exe('vagrant', project_dir, 'halt')
@@ -169,6 +169,7 @@ def build_vms(scenario, project_dir, options)
                 Print.info "vagrant #{destroy} completed successfully."
               else
                 OVirtFunctions::remove_uncreated_vms(destroy_output[:output], options, scenario)
+                # Add ESXI destroy uncreated VMs
               end
             else
               Print.err "Failed to destroy #{failed_vm}. Exiting."
