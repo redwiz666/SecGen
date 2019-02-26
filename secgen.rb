@@ -6,6 +6,7 @@ require_relative 'lib/helpers/constants.rb'
 require_relative 'lib/helpers/print.rb'
 require_relative 'lib/helpers/gem_exec.rb'
 require_relative 'lib/helpers/ovirt.rb'
+require_relative 'lib/helpers/esxi.rb'
 require_relative 'lib/readers/system_reader.rb'
 require_relative 'lib/readers/module_reader.rb'
 require_relative 'lib/output/project_files_creator.rb'
@@ -189,6 +190,7 @@ def build_vms(scenario, project_dir, options)
   end
   if successful_creation
     ovirt_post_build(options, scenario, project_dir) if OVirtFunctions.provider_ovirt?(options)
+    esxi_post_build(options, scenario, project_dir) if ESXIFunctions.provider_vmware_esxi?(options)
   else
     Print.err "Failed to build VMs"
     exit 1
@@ -201,10 +203,14 @@ def esxi_post_build(options, scenario, project_dir)
   Print.std 'Taking ESXI post-build actions...'
   if options[:esxinetwork]
     Print.info 'Assigning network(s) of VM(s)...'
+    ESXIFunctions::assign_networks(options, scenario, get_vm_names(scenario))
     #define network
   end
   if options[:snapshot]
     Print.info 'Creating a snapshot of VM(s)'
+    sleep(20)
+    if ESXIFunctions::provider_vmware_esxi?(options)
+      ESXIFunctions::create_snapshot(options, scenario, get_vm_names(scenario))
   else
     GemExec.exe('vagrant', project_dir, 'snapshot push')
   end
