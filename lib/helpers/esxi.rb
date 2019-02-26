@@ -1,19 +1,14 @@
 require 'timeout'
 require 'rubygems'
 require 'process_helper'
-require 'ovirtsdk4'
 require_relative './print.rb'
 
-class OVirtFunctions
-
-  def self.authz(options)
-    options[:ovirtauthz]
-  end
+class ESXIFunctions
 
   # @param [Hash] options -- command-line opts
-  # @return [Boolean] is this secgen process using oVirt as the vagrant provider?
-  def self.provider_ovirt?(options)
-    options[:ovirtuser] and options[:ovirtpass] and options[:ovirturl]
+  # @return [Boolean] is this secgen process using ESXI as the vagrant provider?
+  def self.provider_vmware_esxi?(options)
+    options[:esxiuser] and options[:esxipass] and options[:esxiurl]
   end
 
   # Helper for removing VMs which Vagrant lost track of, i.e. exist but are reported as 'have not been created'.
@@ -25,19 +20,19 @@ class OVirtFunctions
     while retry_count <= max_retries
       begin
         # Build an ovirt connection
-        ovirt_connection = get_ovirt_connection(options)
+        esxi_connection = get_esxi_connection(options)
         # Determine the oVirt name of the uncreated VMs and Build the oVirt VM names
-        ovirt_vm_names = build_ovirt_names(scenario, options[:prefix], get_uncreated_vms(destroy_output_log))
-        ovirt_vm_names.each do |vm_name|
-          # Find the oVirt VM objects
+        esxi_vm_names = build_esxi_names(scenario, options[:prefix], get_uncreated_vms(destroy_output_log))
+        esxi_vm_names.each do |vm_name|
+          # Find the esxi VM objects
           vms = vms_service(ovirt_connection).list(search: "name=#{vm_name}")
           # Shut down and remove the VMs
           vms.each do |vm|
             begin
               Timeout.timeout(60*5) do
-                while vm_exists(ovirt_connection, vm)
-                  shutdown_vm(ovirt_connection, vm)
-                  remove_vm(ovirt_connection, vm)
+                while vm_exists(esxi_connection, vm)
+                  shutdown_vm(esxi_connection, vm)
+                  remove_vm(esxi_connection, vm)
                 end
                 Print.info 'Successfully removed VM: ' + vm.name + ' -- ID: ' + vm.id
               end
@@ -47,6 +42,7 @@ class OVirtFunctions
             end
           end
         end
+      # Check for errors
       rescue OvirtSDK4::Error => ex
         if retry_count < max_retries
           Print.err 'Error: Retrying... #' + (retry_count + 1).to_s + ' of #' + max_retries.to_s
@@ -57,10 +53,10 @@ class OVirtFunctions
     end
   end
 
-  def self.vm_exists(ovirt_connection, vm)
+  def self.vm_exists(esxi_connection, vm)
     # Check if VM has been removed
     begin
-      service = vms_service(ovirt_connection).vm_service(vm.id)
+      service = vms_service(esxi_connection).vm_service(vm.id)
       service.get
       return true
     rescue OvirtSDK4::Error => err
@@ -73,28 +69,28 @@ class OVirtFunctions
     end
   end
 
-  def self.get_userrole_role(ovirt_connection)
-    roles_service(ovirt_connection).list.each do |role_item|
+  def self.get_userrole_role(esxi_connection)
+    roles_service(esxi_connection).list.each do |role_item|
       if role_item.name == "UserRole"
         return role_item
       end
     end
   end
 
-  def self.roles_service(ovirt_connection)
-    ovirt_connection.system_service.roles_service
+  def self.roles_service(esxi_connection)
+    esxi_connection.system_service.roles_service
   end
 
-  def self.users_service(ovirt_connection)
-    ovirt_connection.system_service.users_service
+  def self.users_service(esxi_connection)
+    esxi_connection.system_service.users_service
   end
 
-  def self.vms_service(ovirt_connection)
-    ovirt_connection.system_service.vms_service
+  def self.vms_service(esxi_connection)
+    esxi_connection.system_service.vms_service
   end
 
-  def self.shutdown_vm(ovirt_connection, vm)
-    service = vms_service(ovirt_connection).vm_service(vm.id)
+  def self.shutdown_vm(esxi_connection, vm)
+    service = vms_service(esxi_connection).vm_service(vm.id)
     while service.get.status == 'up'
       service.stop
       puts 'Stopping VM: ' + vm.name
@@ -102,8 +98,8 @@ class OVirtFunctions
     end
   end
 
-  def self.remove_vm(ovirt_connection, vm)
-    service = vms_service(ovirt_connection).vm_service(vm.id)
+  def self.remove_vm(esxi_connection, vm)
+    service = vms_service(esxi_connection).vm_service(vm.id)
     begin
       service.remove(force: true)
       puts 'Removing VM: ' + vm.name
@@ -113,14 +109,14 @@ class OVirtFunctions
     end
   end
 
-  def self.build_ovirt_names(scenario_path, prefix, vm_names)
-    ovirt_vm_names = []
+  def self.build_esxi_names(scenario_path, prefix, vm_names)
+    esxi_vm_names = []
     scenario_name = scenario_path.split('/').last.split('.').first
     prefix = prefix ? (prefix + '-' + scenario_name) : ('SecGen-' + scenario_name)
     vm_names.each do |vm_name|
-      ovirt_vm_names << "#{prefix}-#{vm_name}".tr('_', '-')
+      esxi_vm_names << "#{prefix}-#{vm_name}".tr('_', '-')
     end
-    ovirt_vm_names
+    esxi_vm_names
   end
 
   def self.get_uncreated_vms(output_log)
@@ -137,19 +133,20 @@ class OVirtFunctions
 
   def self.create_snapshot(options, scenario_path, vm_names)
     vms = []
-    ovirt_connection = get_ovirt_connection(options)
-    ovirt_vm_names = build_ovirt_names(scenario_path, options[:prefix], vm_names)
-    ovirt_vm_names.each do |vm_name|
-      vms << vms_service(ovirt_connection).list(search: "name=#{vm_name}")
+    esxi_connection = get_esxi_connection(options)
+    esxi_vm_names = build_esxi_names(scenario_path, options[:prefix], vm_names)
+    esxi_vm_names.each do |vm_name|
+      vms << vms_service(esxi_connection).list(search: "name=#{vm_name}")
     end
 
     vms.each do |vm_list|
       vm_list.each do |vm|
         Print.std " VM: #{vm.name}"
         # find the service that manages that vm
-        vm_service = vms_service(ovirt_connection).vm_service(vm.id)
+        vm_service = vms_service(esxi_connection).vm_service(vm.id)
         Print.std "  Creating snapshot: #{vm.name}"
         begin
+          # Need to add ESXI snapshot support
           vm_service.snapshots_service.add(
               OvirtSDK4::Snapshot.new(
                   description: "Automated snapshot: #{Time.new.to_s}"
@@ -164,18 +161,19 @@ class OVirtFunctions
   end
 
   def self.assign_networks(options, scenario_path, vm_names)
+    # Need to write Function to assign Networks
     vms = []
     Print.debug vm_names.to_s
-    ovirt_connection = get_ovirt_connection(options)
-    ovirt_vm_names = build_ovirt_names(scenario_path, options[:prefix], vm_names)
-    ovirt_vm_names.each do |vm_name|
+    esxi_connection = get_esxi_connection(options)
+    esxi_vm_names = build_esxi_names(scenario_path, options[:prefix], vm_names)
+    esxi_vm_names.each do |vm_name|
       Print.debug vm_name
-      vms << vms_service(ovirt_connection).list(search: "name=#{vm_name}")
+      vms << vms_service(esxi_connection).list(search: "name=#{vm_name}")
     end
 
     Print.debug vms.to_s
 
-    network_name = options[:ovirtnetwork]
+    network_name = options[:esxinetwork]
     network_network = nil
     network_profile = nil
     # Replace 'network' with 'snoop' where the system name contains snoop
@@ -183,7 +181,7 @@ class OVirtFunctions
     snoop_profile = nil
 
     # get the service that manages the nics
-    vnic_profiles_service = ovirt_connection.system_service.vnic_profiles_service
+    vnic_profiles_service = esxi_connection.system_service.vnic_profiles_service
 
     vnic_profiles_service.list.shuffle.each do |vnic_profile|
 
@@ -208,7 +206,7 @@ class OVirtFunctions
         Print.std " Assigning network to: #{vm.name}"
         begin
           # find the service that manages that vm
-          vm_service = vms_service(ovirt_connection).vm_service(vm.id)
+          vm_service = vms_service(esxi_connection).vm_service(vm.id)
 
           # find the service that manages the nics of that vm
           nics_service = vm_service.nics_service
@@ -260,31 +258,17 @@ class OVirtFunctions
     end
   end
 
-  def self.assign_affinity_group(options, scenario_path, vm_names)
-    vms = []
-    ovirt_vm_names = build_ovirt_names(scenario_path, options[:prefix], vm_names)
-    ovirt_vm_names.each do |vm_name|
-      # python affinity group
-      if system "python #{ROOT_DIR}/lib/helpers/ovirt_affinity.py #{options[:ovirtaffinitygroup]} #{vm_name} #{options[:ovirturl]} #{options[:ovirtuser]} #{options[:ovirtpass]}"
-        Print.std "Affinity group assigned"
-      else
-        Print.err "Failed to assign affinity group"
-        exit 1
-      end
-    end
-  end
-
   def self.assign_permissions(options, scenario_path, vm_names)
-    ovirt_connection = get_ovirt_connection(options)
+    esxi_connection = get_esxi_connection(options)
     username = options[:prefix].chomp
-    user = get_user(options, ovirt_connection, username)
+    user = get_user(options, esxi_connection, username)
     if user
       vms = []
 
-      ovirt_vm_names = build_ovirt_names(scenario_path, username, vm_names)
-      Print.std "Searching for VMs owned by #{username} #{ovirt_vm_names}"
-      ovirt_vm_names.each do |vm_name|
-        vms << vms_service(ovirt_connection).list(search: "name=#{vm_name}")
+      esxi_vm_names = build_esxi_names(scenario_path, username, vm_names)
+      Print.std "Searching for VMs owned by #{username} #{esxi_vm_names}"
+      esxi_vm_names.each do |vm_name|
+        vms << vms_service(esxi_connection).list(search: "name=#{vm_name}")
       end
 
       vms.each do |vm_list|
@@ -292,7 +276,7 @@ class OVirtFunctions
           Print.std " Found VM: #{vm.name}"
 
           # find the service that manages that vm
-          vm_service = vms_service(ovirt_connection).vm_service(vm.id)
+          vm_service = vms_service(esxi_connection).vm_service(vm.id)
 
           # find the service that manages the permissions of that vm
           perm_service = vm_service.permissions_service
@@ -300,10 +284,11 @@ class OVirtFunctions
           # add a permission for that user to use that VM
           perm_attr = {}
           perm_attr[:comment] = 'Automatic assignment'
-          perm_attr[:role] = get_userrole_role(ovirt_connection)
+          perm_attr[:role] = get_userrole_role(esxi_connection)
           perm_attr[:user] = user
           Print.std "  Adding permissions"
           begin
+            # Need to assign premissions for ESXI
             perm_service.add OvirtSDK4::Permission.new(perm_attr)
           rescue Exception => e
             Print.err '****************************************** Skipping'
@@ -318,13 +303,13 @@ class OVirtFunctions
 
     # @param [String] username
     # @return [OvirtUser]
-  def self.get_user(options, ovirt_connection, username)
+  def self.get_user(options, esxi_connection, username)
     un = username.chomp
     search_string = "usrname=#{un}#{authz(options)}"
     puts "Searching for VMs owned by #{un}"
-    user = users_service(ovirt_connection).list(search: search_string).first
+    user = users_service(esxi_connection).list(search: search_string).first
     if user
-      Print.std "Found user '#{un}' on oVirt"
+      Print.std "Found user '#{un}' on ESXI"
       user
     else
       Print.err "User #{un} not found"
@@ -333,18 +318,18 @@ class OVirtFunctions
   end
 
     # @param [String] options -- command-line opts, contains oVirt username, password and url
-  def self.get_ovirt_connection(options)
-    if provider_ovirt?(options)
+  def self.get_esxi_connection(options)
+    if provider_esxi?(options)
       conn_attr = {}
-      conn_attr[:url] = options[:ovirturl]
-      conn_attr[:username] = options[:ovirtuser]
-      conn_attr[:password] = options[:ovirtpass]
+      conn_attr[:url] = options[:esxiurl]
+      conn_attr[:username] = options[:esxiuser]
+      conn_attr[:password] = options[:esxipass]
       conn_attr[:debug] = true
       conn_attr[:insecure] = true
       conn_attr[:headers] = {'Filter' => true}
       OvirtSDK4::Connection.new(conn_attr)
     else
-      Print.err('Fatal: oVirt connections require values for the --ovirtuser and --ovirtpass command line arguments')
+      Print.err('Fatal: ESXI connections require values for the --esxiuser and --esxipass command line arguments')
       exit(1)
     end
   end
