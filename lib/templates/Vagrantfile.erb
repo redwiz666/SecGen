@@ -18,13 +18,9 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
       if selected_module.module_type == 'base'
         @base_type = selected_module.attributes['type']
         @ovirt_template = selected_module.attributes['ovirt_template']
-        @esxi_template = selected_module.attributes['esxi_template']
         @cpu_word_size = selected_module.attributes['cpu_word_size'].first.downcase
         if (@options.has_key? :ovirtuser) && (@options.has_key? :ovirtpass)
           @ovirt_base_template = selected_module.attributes['ovirt_template'].first
-        end
-        if (@options.has_key? :esxiuser) && (@options.has_key? :esxipass)
-          @esxi_base_template = selected_module.attributes['esxi_template'].first
         end
       end
     end -%>
@@ -72,18 +68,13 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
         end -%>          
 <%=
 "        esxi.esxi_username = '#{@options[:esxiuser]}'
-         esxi.esxi_password = '#{@options[:esxipass]}'
-         config.vm.synced_folder('.', '/vagrant', type: 'rsync')" 
+         esxi.esxi_password = '#{@options[:esxipass]}'" 
 
 -%>
 
-# modify base to include ESXI base
-<%= if (@options.has_key? :esxidatastore
+<%= if @options.has_key? :esxidatastore
    "     esxi.esxi_disk_store = '#{@options[:esxi-datastore]}'"
    end -%>
-   # Is the below required??
-<%=
-"        esxi.template = '#{@esxi_base_template}'" %>
 <%=     if @options.has_key? :memory_per_vm
 "        esxi.guest_memsize = '#{@options[:memory_per_vm]}'"
         end -%>
