@@ -212,8 +212,9 @@ def esxi_post_build(options, scenario, project_dir)
     sleep(20)
     if ESXIFunctions::provider_vmware_esxi?(options)
       ESXIFunctions::create_snapshot(options, scenario, get_vm_names(scenario))
-  else
-    GemExec.exe('vagrant', project_dir, 'snapshot push')
+    else
+      GemExec.exe('vagrant', project_dir, 'snapshot push')
+    end
   end
 end
 
