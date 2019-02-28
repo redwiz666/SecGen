@@ -68,7 +68,13 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
         end -%>          
 <%=
 "        esxi.esxi_username = '#{@options[:esxiuser]}'
-         esxi.esxi_password = '#{@options[:esxipass]}'" 
+         esxi.esxi_password = '#{@options[:esxipass]}'
+" 
+<%= if @options.has_key? :esxidisktype
+"         esxi.guest_disk_type = 'thick'"
+else
+"         esxi.guest_disk_type = '#{@options[:esxidisktype]}'"
+end -%>
 
 -%>
 
