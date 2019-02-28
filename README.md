@@ -90,6 +90,8 @@ SecGen accepts arguments to change the way that it behaves, the currently implem
       --esxipass [esxi_password]
       --esxi-url [esxi_api_url]
       --esxi-datastore [esxi_ds]
+      --esxi-disktype [esxi_disktype]
+                 (defaults to 'thin")
       --esxi-network [esxi_network_name]
 
       OVIRT OPTIONS:
