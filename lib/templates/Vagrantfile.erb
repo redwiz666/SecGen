@@ -149,6 +149,9 @@ end
     <%= system.name %>.vm.hostname = '<%= "#{prefix}#{system.name}".tr('_', '-') %>'
     <%= system.name %>.vm.box = 'ovirt4'
     <%= system.name %>.vm.box_url = 'https://github.com/myoung34/vagrant-ovirt4/blob/master/example_box/dummy.box?raw=true'
+    <% elsif (@options.has_key? :esxiuser) && (@options.has_key? :esxipass) %>
+    <%= system.name %>.vm.hostname = '<%= "#{prefix}#{system.name}".tr('_', '-') %>'
+    <%= system.name %>.vm.box = 'esxi'
     <% else %>
     <%= system.name %>.vm.box = "<%= selected_module.module_path_name %>"
     <%= system.name %>.vm.box_url = "<%= selected_module.attributes['url'].first %>"
