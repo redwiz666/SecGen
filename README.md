@@ -31,14 +31,20 @@ You will need to install the following:
 - ImageMagick: https://www.imagemagick.org/
 - And the required Ruby Gems (including Nokogiri and Librarian-puppet)
 
-### On Ubuntu (16.04) these commands will get you up and running
+### On Ubuntu (18.04) these commands will get you up and running
 Install all the required packages:
 ```bash
 # install a recent version of vagrant
-wget https://releases.hashicorp.com/vagrant/1.9.8/vagrant_1.9.8_x86_64.deb
-sudo apt install ./vagrant_1.9.8_x86_64.deb
+wget https://releases.hashicorp.com/vagrant/2.2.4/vagrant_2.2.4_x86_64.deb
+sudo apt install ./vagrant_2.2.4_x86_64.deb
 # install other required packages via repos
 sudo apt-get install ruby-dev zlib1g-dev liblzma-dev build-essential patch virtualbox ruby-bundler imagemagick libmagickwand-dev exiftool libpq-dev libcurl4-openssl-dev libxml2-dev graphviz graphviz-dev
+
+# For esxi support install the following
+vagrant plugin install vagrant-vmware-esxi
+wget https://github.com/richardatlateralblast/ottar/blob/master/VMware-ovftool-4.1.0-2459827-lin.x86_64.bundle
+chmod u+x ./VMware-ovftool-4.1.0-2459827-lin.x86_64.bundle
+./VMware-ovftool-4.1.0-2459827-lin.x86_64.bundle
 ```
 
 Copy SecGen to a directory of your choosing, such as */home/user/bin/SecGen*
