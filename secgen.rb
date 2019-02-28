@@ -54,6 +54,7 @@ def usage
    --esxipass [esxi_password]
    --esxi-url [esxi_api_url]
    --esxi-datastore [esxi_datastore]
+   --esxi-disktype [esxi_disktype]
    --esxi-network [esxi_network_name]
 
    COMMANDS:
@@ -523,6 +524,9 @@ opts.each do |opt, arg|
     when '--esxi-network'
       Print.info "ESXI Network Name : #{arg}"
       options[:esxinetwork] = arg
+    when '--esxi-disktype'
+      Print.info "ESXI disk type : #{arg}"
+      options[:esxi_disktype] = arg
     when '--snapshot'
       Print.info "Taking snapshots when VMs are created"
       options[:snapshot] = true
