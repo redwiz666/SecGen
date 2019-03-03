@@ -18,9 +18,12 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
       if selected_module.module_type == 'base'
         @base_type = selected_module.attributes['type']
         @ovirt_template = selected_module.attributes['ovirt_template']
+		@esxi_url = selected_module.attributes['esxi_url']
         @cpu_word_size = selected_module.attributes['cpu_word_size'].first.downcase
         if (@options.has_key? :ovirtuser) && (@options.has_key? :ovirtpass)
           @ovirt_base_template = selected_module.attributes['ovirt_template'].first
+		 elsif (@options.has_key? :esxiuser) && (@options.has_key? :esxipass)
+			@esxi_base_url = selected_module.attributes['esxi_url'].first
         end
       end
     end -%>
@@ -58,25 +61,19 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
         ovirt.debug = true
     end
     # oVirt provider end
-
-<% if (@options.has_key? :esxiuser) && (@options.has_key? :esxipass) %>
+	
+<% elsif (@options.has_key? :esxiuser) && (@options.has_key? :esxipass) %>
     # vmware_esxi provider begin
     <%= system.name %>.vm.provider :vmware_esxi do |esxi|
-          
-<%= if @options.has_key? :esxiurl
-"        esxi.esxi_hostname = '#{@options[:esxiurl]}'"
+	<%= if @options.has_key? :esxiurl
+"      esxi.esxi_hostname = '#{@options[:esxiurl]}'"
         end -%>          
 <%=
 "        esxi.esxi_username = '#{@options[:esxiuser]}'
-         esxi.esxi_password = '#{@options[:esxipass]}'
-" 
-<%= if @options.has_key? :esxidisktype
-"         esxi.guest_disk_type = 'thick'"
-else
-"         esxi.guest_disk_type = '#{@options[:esxidisktype]}'"
-end -%>
+        esxi.esxi_password = '#{@options[:esxipass]}' 
+		"
+		%>
 
--%>
 
 <%= if @options.has_key? :esxidatastore
    "     esxi.esxi_disk_store = '#{@options[:esxi-datastore]}'"
@@ -88,7 +85,7 @@ end -%>
 "        esxi.guest_numvcpus = #{@options[:cpu_cores]}\n"
         end -%>
 end
-    # vmware_esxi provider end
+		
 <%
   else %>
     config.vm.provider :virtualbox do |vb|
@@ -149,9 +146,10 @@ end
     <%= system.name %>.vm.hostname = '<%= "#{prefix}#{system.name}".tr('_', '-') %>'
     <%= system.name %>.vm.box = 'ovirt4'
     <%= system.name %>.vm.box_url = 'https://github.com/myoung34/vagrant-ovirt4/blob/master/example_box/dummy.box?raw=true'
-    <% elsif (@options.has_key? :esxiuser) && (@options.has_key? :esxipass) %>
+	<% elsif (@options.has_key? :esxiuser) && (@options.has_key? :esxipass) %>
     <%= system.name %>.vm.hostname = '<%= "#{prefix}#{system.name}".tr('_', '-') %>'
     <%= system.name %>.vm.box = 'esxi'
+	<%= system.name %>.vm.box_url = "<%= selected_module.attributes['esxi_url'].first %>"
     <% else %>
     <%= system.name %>.vm.box = "<%= selected_module.module_path_name %>"
     <%= system.name %>.vm.box_url = "<%= selected_module.attributes['url'].first %>"
@@ -167,15 +165,11 @@ end
 <%     if (selected_module.attributes['range'].first.nil? || selected_module.attributes['range'].first == "dhcp") and (!selected_module.received_inputs.include? 'IP_address' and !@options[:ip_ranges])-%>
 <%       if (@options.has_key? :ovirtnetwork) && (@options.has_key? :ovirtuser) && (@options.has_key? :ovirtpass)  %>
     <%= system.name %>.vm.network :<%= selected_module.attributes['type'].first %>, type: "dhcp", :ovirt__network_name => '<%= get_ovirt_network_name(system.name, @options[:ovirtnetwork]) %>'
-<%       elsif (@options.has_key? :esxinetwork) && (@options.has_key? :esxiuser) && (@options.has_key? :esxipass) %>
-         # esxi.esxi_virtual_network
-    <%= system.name %>.vm.network :<%= selected_module.attributes['type'].first %>, type: "dhcp", :esxi__network_name => '<%= get_esxi_network_name(system.name, @options[:esxinetwork]) %>'
 <%       else %>
     <%= system.name %>.vm.network :<%= selected_module.attributes['type'].first %>, type: "dhcp", auto_config: false
 <%       end %>
 <%     # Static networking -%>
 <%     else -%>
-        # Need to add Static esxi networking
 <%      # Static oVirt networking -%>
 <%       if (@options.has_key? :ovirtuser) && (@options.has_key? :ovirtpass) -%>
 <%         interface = 'ens3' -%>
