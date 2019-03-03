@@ -18,12 +18,10 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
       if selected_module.module_type == 'base'
         @base_type = selected_module.attributes['type']
         @ovirt_template = selected_module.attributes['ovirt_template']
-		@esxi_url = selected_module.attributes['esxi_url']
+	@esxi_url = selected_module.attributes['esxi_url']
         @cpu_word_size = selected_module.attributes['cpu_word_size'].first.downcase
         if (@options.has_key? :ovirtuser) && (@options.has_key? :ovirtpass)
           @ovirt_base_template = selected_module.attributes['ovirt_template'].first
-		 elsif (@options.has_key? :esxiuser) && (@options.has_key? :esxipass)
-			@esxi_base_url = selected_module.attributes['esxi_url'].first
         end
       end
     end -%>
@@ -69,7 +67,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
 "      esxi.esxi_hostname = '#{@options[:esxiurl]}'"
         end -%>          
 <%=
-"        esxi.esxi_username = '#{@options[:esxiuser]}'
+"       esxi.esxi_username = '#{@options[:esxiuser]}'
         esxi.esxi_password = '#{@options[:esxipass]}' 
 		"
 		%>
@@ -148,8 +146,8 @@ end
     <%= system.name %>.vm.box_url = 'https://github.com/myoung34/vagrant-ovirt4/blob/master/example_box/dummy.box?raw=true'
 	<% elsif (@options.has_key? :esxiuser) && (@options.has_key? :esxipass) %>
     <%= system.name %>.vm.hostname = '<%= "#{prefix}#{system.name}".tr('_', '-') %>'
-    <%= system.name %>.vm.box = 'esxi'
-	<%= system.name %>.vm.box_url = "<%= selected_module.attributes['esxi_url'].first %>"
+    <%= system.name %>.vm.box = "<%= selected_module.module_path_name %>"
+    <%= system.name %>.vm.box_url = "<%= selected_module.attributes['esxi_url'].first %>"
     <% else %>
     <%= system.name %>.vm.box = "<%= selected_module.module_path_name %>"
     <%= system.name %>.vm.box_url = "<%= selected_module.attributes['url'].first %>"
