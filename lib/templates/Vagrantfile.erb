@@ -69,13 +69,16 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
 <%=
 "       esxi.esxi_username = '#{@options[:esxiuser]}'
         esxi.esxi_password = '#{@options[:esxipass]}' 
-		"
-		%>
-
+		"%>
+<%= if @options.has_key? :esxinetwork
+   "     esxi.esxi_virtual_network = '#{@options[:esxinetwork]}'"
+   end -%>
 
 <%= if @options.has_key? :esxidatastore
-   "     esxi.esxi_disk_store = '#{@options[:esxi-datastore]}'"
+   "     esxi.esxi_disk_store = '#{@options[:esxidatastore]}'"
    end -%>
+<%= if @options.has_key? :esxi_disktype
+"       esxi.guest_disk_type = '#{@options[:esxi_disktype]}'"
 <%=     if @options.has_key? :memory_per_vm
 "        esxi.guest_memsize = '#{@options[:memory_per_vm]}'"
         end -%>
