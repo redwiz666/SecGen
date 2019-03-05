@@ -67,7 +67,7 @@ GEM
       PriorityQueue
       activesupport
       ruby-graphviz
-    i18n (1.5.3)
+    i18n (1.6.0)
       concurrent-ruby (~> 1.0)
     json (2.2.0)
     librarian-puppet (3.0.0)
