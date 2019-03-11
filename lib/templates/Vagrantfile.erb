@@ -91,7 +91,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
 "       esxi.guest_numvcpus = #{@options[:cpu_cores]}\n"
         end -%>
 end
-		
+	# End ESXi provider	
 <%
   else %>
     config.vm.provider :virtualbox do |vb|
