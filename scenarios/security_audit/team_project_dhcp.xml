@@ -19,14 +19,6 @@
     <system_name>web</system_name>
     <base platform="linux" distro="Debian 7.8" type="server"/>
 
-    <input into_datastore="IP_addresses">
-      <value>172.10.2.2</value>
-      <value>172.10.2.3</value>
-      <value>172.10.2.4</value>
-      <value>172.10.2.5</value>
-      <value>172.10.2.6</value>
-    </input>
-
     <service module_path="services/unix/http/parameterised_website">
       <input into="organisation" into_datastore="organisation">
         <encoder type="line_selector">
@@ -66,15 +58,8 @@
     
     
     
-    <network type="public_network"/>
-    
-    <network type="private_network">
-      <input into="IP_address">
-        <datastore access="next">IP_addresses</datastore>
-      </input>
-    </network>
-    <!--<network module_path=".*private_network_1"/>-->
-    <!--<network module_path=".*private_network_2"/>-->
+    <network module_path=".*public_network_1"/>
+    <network module_path=".*private_network_2"/>
   </system>
 
   <!-- Intranet Server on NIC 2 -->
@@ -156,12 +141,7 @@
       </input>
     </build>
 
-    <network type="private_network">
-      <input into="IP_address">
-        <datastore access="next">IP_addresses</datastore>
-      </input>
-    </network>
-    <!--<network module_path=".*private_network_2"/>-->
+    <network module_path=".*private_network_2"/>
   </system>
 
    <!--Desktop Client on NIC2 -->
@@ -185,13 +165,7 @@
     </utility>
 
     <utility module_path=".*handy_cli_tools"/>
-
-    <network type="private_network">
-      <input into="IP_address">
-        <datastore access="next">IP_addresses</datastore>
-      </input>
-    </network>
-    <!--<network module_path=".*private_network_2"/>-->
+    <network module_path=".*private_network_2"/>
   </system>
 
 </scenario>
