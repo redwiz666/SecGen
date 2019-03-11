@@ -133,7 +133,6 @@
 			</input>
 		</vulnerability>
 
-		<service/>
 
 		<network module_path=".*private_network_1"/>
 		<build type="cleanup">
