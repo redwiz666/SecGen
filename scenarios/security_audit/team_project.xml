@@ -148,6 +148,9 @@
       </input>
     </vulnerability>
 
+    <service/>
+    <service/>
+
     <build type="cleanup">
       <input into="root_password">
         <generator type="password_generator"/>
@@ -190,6 +193,28 @@
       </input>
     </network>
     <!--<network module_path=".*private_network_2"/>-->
+  </system>
+
+  <system>
+    <system_name>attack_vm_1</system_name>
+    <base distro="Kali" name="MSF"/>
+    <network type="private_network">
+      <input into="IP_address">
+        <datastore access="next">IP_addresses</datastore>
+      </input>
+    </network>
+  <!--<network module_path=".*private_network_2"/>-->
+  </system>
+
+  <system>
+    <system_name>attack_vm_2</system_name>
+    <base distro="Kali" name="MSF"/>
+    <network type="private_network">
+      <input into="IP_address">
+        <datastore access="next">IP_addresses</datastore>
+      </input>
+    </network>
+  <!--<network module_path=".*private_network_2"/>-->
   </system>
 
 </scenario>
