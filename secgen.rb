@@ -191,6 +191,15 @@ def build_vms(scenario, project_dir, options)
   end
   if successful_creation
     ovirt_post_build(options, scenario, project_dir) if OVirtFunctions.provider_ovirt?(options)
+        if options[:snapshot]
+        Print.info 'Creating a snapshot of VM(s)'
+        sleep(20) # give oVirt/Virtualbox a chance to save any VM config changes before creating the snapshot
+        if OVirtFunctions::provider_ovirt?(options)
+            OVirtFunctions::create_snapshot(options, scenario, get_vm_names(scenario))
+        else
+            GemExec.exe('vagrant', project_dir, 'snapshot push')
+        end
+    end
   else
     Print.err "Failed to build VMs"
     exit 1
@@ -208,15 +217,6 @@ def ovirt_post_build(options, scenario, project_dir)
   if options[:ovirtaffinitygroup]
     Print.info 'Assigning affinity group of VM(s)'
     OVirtFunctions::assign_affinity_group(options, scenario, get_vm_names(scenario))
-  end
-  if options[:snapshot]
-    Print.info 'Creating a snapshot of VM(s)'
-    sleep(20) # give oVirt/Virtualbox a chance to save any VM config changes before creating the snapshot
-    if OVirtFunctions::provider_ovirt?(options)
-      OVirtFunctions::create_snapshot(options, scenario, get_vm_names(scenario))
-    else
-      GemExec.exe('vagrant', project_dir, 'snapshot push')
-    end
   end
 end
 
@@ -386,7 +386,6 @@ opts = GetoptLong.new(
     ['--ovirt-network', GetoptLong::REQUIRED_ARGUMENT],
     ['--ovirt-affinity-group', GetoptLong::REQUIRED_ARGUMENT],
     ['--snapshot', GetoptLong::NO_ARGUMENT],
-    #esxi options added by Redwiz666
     ['--esxiuser', GetoptLong::REQUIRED_ARGUMENT],
     ['--esxipass', GetoptLong::REQUIRED_ARGUMENT],
     ['--esxi-url', GetoptLong::REQUIRED_ARGUMENT],
@@ -486,25 +485,24 @@ opts.each do |opt, arg|
       Print.info "Taking snapshots when VMs are created"
       options[:snapshot] = true
     
-    #esxi options added
     when '--esxiuser'
-      Print.info "ESXI Username : #{arg}"
+      Print.info "ESXi Username : #{arg}"
       options[:esxiuser] = arg
     when '--esxipass'
-      Print.info "ESXI Password : ********"
+      Print.info "ESXi Password : ********"
       options[:esxipass] = arg
     when '--esxi-url'
-      Print.info "ESXI API url : #{arg}"
+      Print.info "ESXi host url : #{arg}"
       options[:esxiurl] = arg
     when '--esxi-datastore'
-      Print.info "ESXI datastore: #{arg}"
+      Print.info "ESXi datastore: #{arg}"
       options[:esxidatastore] = arg
     when '--esxi-network'
-      Print.info "ESXI Network Name : #{arg}"
+      Print.info "ESXi Network Name : #{arg}"
       options[:esxinetwork] = arg
     when '--esxi-disktype'
-      Print.info "ESXI disk type : #{arg}"
-      options[:esxi_disktype] = arg
+      Print.info "ESXi disk type : #{arg}"
+      options[:esxidisktype] = arg
     when '--snapshot'
       Print.info "Taking snapshots when VMs are created"
       options[:snapshot] = true
