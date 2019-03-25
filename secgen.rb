@@ -10,6 +10,14 @@ require_relative 'lib/readers/system_reader.rb'
 require_relative 'lib/readers/module_reader.rb'
 require_relative 'lib/output/project_files_creator.rb'
 
+require 'io/console'
+
+def continue_story                                                                                                               
+  print "press any key"                                                                                                    
+  STDIN.getch                                                                                                              
+  print "            \r" # extra space to overwrite in case next sentence is short                                                                                                              
+end 
+
 # Displays secgen usage data
 def usage
   Print.std "Usage:
@@ -357,6 +365,29 @@ if ARGV.include? '--read-options'
 
   conf_data = File.read(conf_path).split(' ')
   ARGV.unshift(*conf_data)
+end
+
+# Add read-options from config file (needs handling before options parsed by GetoptLong)
+if ARGV.include? '--distro-map'
+  index = ARGV.find_index('--distro-map')
+  map_path = ARGV[index + 1]
+
+  # remove --distro-map and map_path
+  ARGV.delete_at(index)
+  ARGV.delete_at(index)
+
+  map_data = File.read(map_path).split(' ')
+  Print.info "Reading Network distro map...."
+  Print.info "Found #{map.data.length} systems to send VMs to ..."
+  continue_story
+  options[:distro_map] = {}
+  map_data.each do |opt|
+    #Splitting the Destations into new tables
+    host = opt.split(':')
+    #example 192.168.1.5:Desktop,File_server
+    options[:distro_map[:host(0)]] = host(1)
+    continue_story
+  end
 end
 
 # Get command line arguments
