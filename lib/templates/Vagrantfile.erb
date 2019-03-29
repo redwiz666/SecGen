@@ -62,21 +62,12 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
 	
 <% elsif (@options.has_key? :esxiuser) && (@options.has_key? :esxipass) %>
     # vmware_esxi provider begin
-    <%= system.name %>.vm.provider :vmware_esxi do |esxi|
-	<%= if @options.has_key? :esxiurl
-"       esxi.esxi_hostname = '#{@options[:esxiurl]}'"
-        end -%>          
+    <%= system.name %>.vm.provider :vmware_esxi do |esxi|        
 <%=
-"       esxi.esxi_username = '#{@options[:esxiuser]}'
+"	esxi.esxi_hostname = '#{@options[:esxiurl]}'       
+	esxi.esxi_username = '#{@options[:esxiuser]}'
         esxi.esxi_password = '#{@options[:esxipass]}' "
 		%>
-
-<%= if @options.has_key? :esxinetwork
-"       esxi.esxi_virtual_network = ['#{@options[:esxinetwork]}']"
-		else
-"		esxi.esxi_virtual_network = ['VM Network']"
-   end -%>
-
 
 <%= if @options.has_key? :esxidatastore
    "     esxi.esxi_disk_store = '#{@options[:esxidatastore]}'"
@@ -152,7 +143,7 @@ end
     <%= system.name %>.vm.hostname = '<%= "#{prefix}#{system.name}".tr('_', '-') %>'
     <%= system.name %>.vm.box = 'ovirt4'
     <%= system.name %>.vm.box_url = 'https://github.com/myoung34/vagrant-ovirt4/blob/master/example_box/dummy.box?raw=true'
-	<% elsif (@options.has_key? :esxiuser) && (@options.has_key? :esxipass) %>
+    <% elsif (@options.has_key? :esxiuser) && (@options.has_key? :esxipass) %>
     <%= system.name %>.vm.hostname = '<%= "#{prefix}#{system.name}".tr('_', '-') %>'
     <%= system.name %>.vm.box = "<%= selected_module.module_path_name %>"
     <%= system.name %>.vm.box_url = "<%= selected_module.attributes['esxi_url'].first %>"
